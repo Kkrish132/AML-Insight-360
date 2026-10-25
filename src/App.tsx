@@ -37,6 +37,9 @@ import { DatasetUploadModal } from './components/DatasetUploadModal';
 import { CustomGraphEditorModal } from './components/CustomGraphEditorModal';
 import { SARModal } from './components/SARModal';
 import { KnowledgeBaseModal } from './components/KnowledgeBaseModal';
+import { EmailReportModal } from './components/EmailReportModal';
+import { ConnectorDatabaseModal } from './components/ConnectorDatabaseModal';
+import { FeatureExtractionPanel } from './components/FeatureExtractionPanel';
 import { mockScenarios } from './data/mockScenarios';
 import { Scenario, AccountNode, UserProfile } from './types';
 import { soundFx } from './utils/audio';
@@ -71,8 +74,10 @@ export function App() {
   const [isKnowledgeBaseOpen, setIsKnowledgeBaseOpen] = useState<boolean>(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
   const [isEditorModalOpen, setIsEditorModalOpen] = useState<boolean>(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState<boolean>(false);
+  const [isDbModalOpen, setIsDbModalOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [activeMainTab, setActiveMainTab] = useState<'COMMAND' | 'DATASET_TABLE' | 'ANALYTICS' | 'TEST_SUITE' | 'BENCHMARKS' | 'TRANSACTIONS' | 'RINGS' | 'SIMULATOR'>('COMMAND');
+  const [activeMainTab, setActiveMainTab] = useState<'COMMAND' | 'DATASET_TABLE' | 'ANALYTICS' | 'TEST_SUITE' | 'BENCHMARKS' | 'TRANSACTIONS' | 'RINGS' | 'SIMULATOR' | 'FEATURES'>('COMMAND');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'alert' } | null>(null);
 
   // Sync html class for dark/light theme (defaults to clean light banking theme)
@@ -220,6 +225,8 @@ export function App() {
           onExportJSON={handleExportJSON}
           onSearch={handleSearch}
           searchQuery={searchQuery}
+          currentScenario={currentScenario}
+          onSelectNode={handleSelectNode}
         />
 
         {/* Toast Alert Banner */}
@@ -325,6 +332,53 @@ export function App() {
             <RuleSimulator />
           )}
 
+          {/* Module 9: ML Feature Extraction & Model Info */}
+          {activeMainTab === 'FEATURES' && (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <FeatureExtractionPanel selectedNode={selectedNode} />
+              <div className="space-y-4">
+                {/* Quick action: email + DB connector */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+                  <h3 className="text-sm font-bold text-slate-900 font-mono mb-3 flex items-center gap-2">
+                    <span>⚡</span> Quick Actions
+                  </h3>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setIsEmailModalOpen(true)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-800 text-xs font-semibold transition-colors"
+                    >
+                      <span className="text-lg">📧</span>
+                      <div className="text-left">
+                        <div className="font-bold">Email Report</div>
+                        <div className="text-[10px] text-blue-600 font-normal">Send SAR alert to compliance team or Gmail</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setIsDbModalOpen(true)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition-colors"
+                    >
+                      <span className="text-lg">🗄️</span>
+                      <div className="text-left">
+                        <div className="font-bold">Connector Database</div>
+                        <div className="text-[10px] text-emerald-600 font-normal">PostgreSQL · MongoDB · Firebase · REST API</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setIsSARModalOpen(true)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-800 text-xs font-semibold transition-colors"
+                    >
+                      <span className="text-lg">📋</span>
+                      <div className="text-left">
+                        <div className="font-bold">Generate SAR Report</div>
+                        <div className="text-[10px] text-amber-600 font-normal">FinCEN Form 111 regulatory filing</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         </main>
 
         {/* Bank Footer */}
@@ -333,8 +387,12 @@ export function App() {
             <ShieldAlert className="w-3.5 h-3.5 text-emerald-700" />
             <span className="font-semibold text-slate-800">Apex Commercial Bank</span> • AML Mule Account Surveillance Intelligence Platform
           </div>
-          <div className="text-[11px] text-slate-400">
-            Enterprise Banking Tier • Confidential Regulatory Sandbox
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsEmailModalOpen(true)} className="text-[11px] text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1">📧 Email Report</button>
+            <span className="text-slate-300">|</span>
+            <button onClick={() => setIsDbModalOpen(true)} className="text-[11px] text-emerald-600 hover:text-emerald-800 font-semibold flex items-center gap-1">🗄️ DB Connector</button>
+            <span className="text-slate-300">|</span>
+            <span className="text-[11px] text-slate-400">Enterprise Banking Tier • Confidential Regulatory Sandbox</span>
           </div>
         </footer>
 
@@ -369,8 +427,23 @@ export function App() {
         onClose={() => setIsKnowledgeBaseOpen(false)}
       />
 
+      {/* Email Report Modal */}
+      <EmailReportModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        scenario={currentScenario}
+        selectedNode={selectedNode}
+      />
+
+      {/* Connector Database Modal */}
+      <ConnectorDatabaseModal
+        isOpen={isDbModalOpen}
+        onClose={() => setIsDbModalOpen(false)}
+      />
+
     </div>
   );
 }
+
 
 export default App;

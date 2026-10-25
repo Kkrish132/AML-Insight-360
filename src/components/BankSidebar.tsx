@@ -23,8 +23,8 @@ import { mockScenarios } from '../data/mockScenarios';
 import { soundFx } from '../utils/audio';
 
 interface BankSidebarProps {
-  activeTab: 'COMMAND' | 'DATASET_TABLE' | 'ANALYTICS' | 'TEST_SUITE' | 'BENCHMARKS' | 'TRANSACTIONS' | 'RINGS' | 'SIMULATOR';
-  setActiveTab: (tab: 'COMMAND' | 'DATASET_TABLE' | 'ANALYTICS' | 'TEST_SUITE' | 'BENCHMARKS' | 'TRANSACTIONS' | 'RINGS' | 'SIMULATOR') => void;
+  activeTab: 'COMMAND' | 'DATASET_TABLE' | 'ANALYTICS' | 'TEST_SUITE' | 'BENCHMARKS' | 'TRANSACTIONS' | 'RINGS' | 'SIMULATOR' | 'FEATURES';
+  setActiveTab: (tab: 'COMMAND' | 'DATASET_TABLE' | 'ANALYTICS' | 'TEST_SUITE' | 'BENCHMARKS' | 'TRANSACTIONS' | 'RINGS' | 'SIMULATOR' | 'FEATURES') => void;
   currentScenario: Scenario;
   onSelectScenario: (scenario: Scenario) => void;
   currentUser?: UserProfile | null;
@@ -40,7 +40,7 @@ export const BankSidebar: React.FC<BankSidebarProps> = ({
   onLogout
 }) => {
   const navItems: Array<{
-    id: 'COMMAND' | 'DATASET_TABLE' | 'ANALYTICS' | 'TEST_SUITE' | 'BENCHMARKS' | 'TRANSACTIONS' | 'RINGS' | 'SIMULATOR';
+    id: 'COMMAND' | 'DATASET_TABLE' | 'ANALYTICS' | 'TEST_SUITE' | 'BENCHMARKS' | 'TRANSACTIONS' | 'RINGS' | 'SIMULATOR' | 'FEATURES';
     label: string;
     icon: React.ElementType;
     badge?: string;
@@ -53,6 +53,7 @@ export const BankSidebar: React.FC<BankSidebarProps> = ({
     { id: 'TRANSACTIONS', label: 'Live Transaction Stream', icon: Activity },
     { id: 'RINGS', label: 'Mule Syndicates & Rings', icon: Layers, badge: `${currentScenario.muleRings.length}` },
     { id: 'SIMULATOR', label: 'AML Rule Simulator', icon: Sliders },
+    { id: 'FEATURES', label: 'ML Features & Models', icon: Sparkles, badge: 'NEW' },
   ];
 
   const userInitials = currentUser?.name 

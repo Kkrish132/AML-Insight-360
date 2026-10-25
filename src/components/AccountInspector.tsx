@@ -349,36 +349,142 @@ export const AccountInspector: React.FC<AccountInspectorProps> = ({
         </div>
       )}
 
-      {/* TAB 3: Explainable AI (SHAP Impact Breakdown) */}
+
+      {/* TAB 3: Explainable AI (Full XAI Breakdown) */}
       {activeTab === 'SHAP_XAI' && (
         <div className="space-y-3 my-2 font-mono text-xs">
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
-                <Cpu className="w-3.5 h-3.5 text-emerald-700" /> Explainable AI (SHAP Impact Breakdown)
+
+          {/* ── Plain-English Verdict ── */}
+          <div className={`p-3.5 rounded-xl border ${
+            selectedNode.riskScore > 80 ? 'bg-red-50 border-red-200' :
+            selectedNode.riskScore > 60 ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
+          }`}>
+            <div className="flex items-start gap-2.5">
+              <Sparkles className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                selectedNode.riskScore > 80 ? 'text-red-600' :
+                selectedNode.riskScore > 60 ? 'text-amber-600' : 'text-emerald-600'
+              }`} />
+              <div>
+                <p className={`text-xs font-bold mb-1 ${
+                  selectedNode.riskScore > 80 ? 'text-red-800' :
+                  selectedNode.riskScore > 60 ? 'text-amber-800' : 'text-emerald-800'
+                }`}>
+                  {selectedNode.riskScore > 80 ? '⚠ HIGH RISK — AI Explanation' :
+                   selectedNode.riskScore > 60 ? '⚡ MEDIUM RISK — AI Explanation' : '✓ LOW RISK — AI Explanation'}
+                </p>
+                <p className={`text-[11px] leading-relaxed ${
+                  selectedNode.riskScore > 80 ? 'text-red-700' :
+                  selectedNode.riskScore > 60 ? 'text-amber-700' : 'text-emerald-700'
+                }`}>
+                  {selectedNode.riskScore > 80
+                    ? `Account "${selectedNode.name}" was flagged as a ${selectedNode.muleType} because it received funds from ${selectedNode.inDegree} sources and forwarded ${(selectedNode.inflowOutflowRatio * 100).toFixed(0)}% within ${selectedNode.drainLatencySeconds}s — a classic pass-through mule pattern. Its betweenness centrality of ${selectedNode.betweennessCentrality.toFixed(2)} places it as a critical network bridge.`
+                    : selectedNode.riskScore > 60
+                    ? `Account shows ${selectedNode.velocityScore > 50 ? 'elevated velocity (' + selectedNode.velocityScore + '/100) ' : ''}and ${selectedNode.dormantDaysPriorToBurst > 30 ? 'dormancy-burst behaviour (' + selectedNode.dormantDaysPriorToBurst + ' inactive days)' : 'moderate risk indicators'}. Pattern is consistent with a '${selectedNode.muleType}' profile but lacks full confirmation criteria.`
+                    : `Account "${selectedNode.name}" exhibits low-risk behaviour. Normal transaction frequency, low drain ratio, and limited network centrality. KYC tier: ${selectedNode.kycTier}. No syndicate ring membership detected.`
+                  }
+                </p>
               </div>
-              <span className="text-[10px] text-slate-500 font-medium">Neural AML Classifier</span>
+            </div>
+          </div>
+
+          {/* ── Model Info ── */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="p-2.5 rounded-xl bg-violet-50 border border-violet-100 text-center">
+              <div className="text-[10px] text-violet-500 uppercase font-bold">Model</div>
+              <div className="text-[11px] font-bold text-violet-900 mt-0.5">GAT v2</div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
+              <div className="text-[10px] text-slate-500 uppercase font-bold">Confidence</div>
+              <div className={`text-[11px] font-bold mt-0.5 ${
+                selectedNode.riskScore > 80 ? 'text-red-700' : selectedNode.riskScore > 60 ? 'text-amber-700' : 'text-emerald-700'
+              }`}>{Math.min(99, 70 + Math.floor(selectedNode.riskScore * 0.25))}%</div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
+              <div className="text-[10px] text-slate-500 uppercase font-bold">Features</div>
+              <div className="text-[11px] font-bold text-slate-900 mt-0.5">{selectedNode.shapFactors.length} active</div>
+            </div>
+          </div>
+
+          {/* ── SHAP Feature Impact ── */}
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <Cpu className="w-3.5 h-3.5 text-violet-600" /> SHAP Feature Impact
+              </div>
+              <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Risk +</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> Risk −</span>
+              </div>
             </div>
 
             <div className="space-y-2.5">
-              {selectedNode.shapFactors.map((factor, idx) => (
-                <div key={idx} className="text-xs">
-                  <div className="flex items-center justify-between text-[11px] mb-1">
-                    <span className="text-slate-800 font-medium">{factor.feature}</span>
-                    <span className={`font-bold ${factor.impact > 0 ? 'text-red-700' : 'text-emerald-700'}`}>
-                      {factor.impact > 0 ? `+${factor.impact} pts` : `${factor.impact} pts`}
-                    </span>
+              {selectedNode.shapFactors.map((factor, idx) => {
+                const isPositive = factor.impact > 0;
+                const barWidth = Math.min(100, Math.abs(factor.impact) * 2);
+                return (
+                  <div key={idx} className="text-xs">
+                    <div className="flex items-center justify-between text-[11px] mb-1">
+                      <span className="text-slate-800 font-semibold">{factor.feature}</span>
+                      <span className={`font-bold tabular-nums ${isPositive ? 'text-red-700' : 'text-emerald-700'}`}>
+                        {isPositive ? `+${factor.impact}` : `${factor.impact}`} pts
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${isPositive ? 'bg-gradient-to-r from-amber-400 to-red-600' : 'bg-gradient-to-r from-emerald-400 to-emerald-600'}`}
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{factor.description}</p>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full ${factor.impact > 0 ? 'bg-gradient-to-r from-amber-500 to-red-600' : 'bg-emerald-600'}`}
-                      style={{ width: `${Math.min(100, Math.abs(factor.impact) * 2)}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{factor.description}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
+          </div>
+
+          {/* ── Key Risk Drivers (plain English bullets) ── */}
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <p className="text-[10px] font-bold text-slate-600 uppercase mb-2">Top Risk Drivers (Plain Language)</p>
+            <ul className="space-y-1.5">
+              {selectedNode.drainLatencySeconds < 120 && (
+                <li className="flex items-start gap-1.5 text-[11px] text-red-700">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                  Funds forwarded in {selectedNode.drainLatencySeconds}s — indicates automated or pre-planned fund routing
+                </li>
+              )}
+              {selectedNode.betweennessCentrality > 0.15 && (
+                <li className="flex items-start gap-1.5 text-[11px] text-red-700">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                  High network centrality ({selectedNode.betweennessCentrality.toFixed(2)}) — this account bridges otherwise disconnected groups
+                </li>
+              )}
+              {selectedNode.dormantDaysPriorToBurst > 30 && (
+                <li className="flex items-start gap-1.5 text-[11px] text-amber-700">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                  {selectedNode.dormantDaysPriorToBurst}-day dormancy before sudden activation — classic sleeper mule pattern
+                </li>
+              )}
+              {selectedNode.inflowOutflowRatio > 0.85 && (
+                <li className="flex items-start gap-1.5 text-[11px] text-red-700">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                  {(selectedNode.inflowOutflowRatio * 100).toFixed(0)}% of received funds immediately evacuated — pure pass-through behaviour
+                </li>
+              )}
+              {selectedNode.velocityScore > 60 && (
+                <li className="flex items-start gap-1.5 text-[11px] text-amber-700">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                  Velocity score {selectedNode.velocityScore}/100 — abnormal transaction frequency above AML threshold
+                </li>
+              )}
+              {selectedNode.kycTier === 'TIER_1_BASIC' && selectedNode.riskScore > 60 && (
+                <li className="flex items-start gap-1.5 text-[11px] text-amber-700">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                  Only TIER_1 KYC verification — insufficient identity checks given activity volume
+                </li>
+              )}
+            </ul>
           </div>
         </div>
       )}
